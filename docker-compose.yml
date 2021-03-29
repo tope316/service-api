@@ -1,0 +1,87 @@
+version: "3.8"
+
+services:
+
+  gateway:
+    build:
+      context: .
+    image: service-api
+    volumes:
+      - ./ssl:/ssl
+    env_file: docker-compose.env
+    expose:
+      - "3000"
+    environment:
+      SERVICES: gateway
+    depends_on:
+      - nats
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gateway.rule=Host(`dev.networkgateway.net`)"
+      - "traefik.http.routers.gateway.entrypoints=https"
+      - "traefik.http.routers.gateway.service=gateway-service-api@docker"
+      - "traefik.http.routers.gateway.tls=true"
+    networks:
+      - internal
+
+  auth:
+    build:
+      context: .
+    image: service-api
+    env_file: docker-compose.env
+    environment:
+      SERVICES: auth  
+    labels:
+      - "traefik.enable=false"      
+    depends_on:
+      - nats
+    networks:
+      - internal
+
+  core:
+    build:
+      context: .
+    image: service-api
+    env_file: docker-compose.env
+    environment:
+      SERVICES: core
+    labels:
+      - "traefik.enable=false"       
+    depends_on:
+      - nats
+    networks:
+      - internal
+
+  nats:
+    image: nats:alpine
+    hostname: nats
+    labels:
+      - "traefik.enable=false"    
+    networks:
+      - internal
+    ports:
+      - "4222:4222"       
+
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik-secure.rule=Host(`dashboard.networkgateway.net`)"
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+      - "traefik.http.routers.traefik-secure.entrypoints=https"
+      - "traefik.http.routers.traefik-secure.tls=true"
+    ports:
+     - "80:80"
+     - "443:443"
+    volumes:
+      - ./ssl:/etc/traefik/certs/
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - ./traefik/:/etc/traefik/config/:ro
+    networks:
+      - internal
+      - default
+
+networks:
+  internal:
