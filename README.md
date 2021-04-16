@@ -29,7 +29,7 @@ To stop service-api in Production mode:
 
 ## Troubleshooting:
 1. When an error is encountered starting nats container in docker with error message: "(HTTP code 500) server error - Ports are not available: listen tcp 0.0.0.0:4222: bind: An attempt was made to access a socket in a way forbidden by its access permissions."<br/>
-   Solution: https://github.com/docker/for-win/issues/3171#issuecomment-739740248
+   Solution: https://github.com/docker/for-win/issues/3171#issuecomment-739740248<br/>
    Execute the ff. commands:
       * net stop winnat
       * docker start nats
